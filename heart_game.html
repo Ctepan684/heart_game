@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Собери сердечки! ❤️</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; background: #fff; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Игрок
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 70,
+            size: 40,
+            speed: 5,
+            color: "#FFB6C1"
+        };
+
+        // Сердечки
+        const hearts = [];
+        const heartSize = 25;
+        let heartsCollected = 0;
+        const heartsNeeded = 7;
+
+        // Тортик
+        const cake = {
+            x: Math.random() * (canvas.width - 60),
+            y: Math.random() * (canvas.height - 100),
+            size: 60,
+            appeared: false,
+            color: "#8B4513"
+        };
+
+        // Создаём сердечки
+        for (let i = 0; i < 15; i++) {
+            hearts.push({
+                x: Math.random() * (canvas.width - heartSize),
+                y: Math.random() * (canvas.height - heartSize - 100),
+                color: "#FF0000"
+            });
+        }
+
+        // Управление (касаниями)
+        let touchX = player.x;
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            touchX = e.touches[0].clientX;
+        });
+
+        // Игровой цикл
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Движение игрока
+            player.x += (touchX - player.x) * 0.1;
+
+            // Рисуем игрока (котёнка)
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+
+            // Рисуем сердечки
+            hearts.forEach((heart, index) => {
+                ctx.fillStyle = heart.color;
+                drawHeart(heart.x, heart.y, heartSize);
+
+                // Проверка сбора
+                if (
+                    Math.abs(player.x - heart.x) < player.size/2 + heartSize/2 &&
+                    Math.abs(player.y - heart.y) < player.size/2 + heartSize/2
+                ) {
+                    hearts.splice(index, 1);
+                    heartsCollected++;
+                }
+            });
+
+            // Тортик после сбора всех сердечек
+            if (heartsCollected >= heartsNeeded && !cake.appeared) {
+                cake.appeared = true;
+            }
+
+            // Рисуем тортик
+            if (cake.appeared) {
+                ctx.fillStyle = cake.color;
+                ctx.fillRect(cake.x, cake.y, cake.size, cake.size);
+                ctx.fillStyle = "#FFB6C1";
+                ctx.fillRect(cake.x, cake.y - 10, cake.size, 10);
+
+                // Проверка победы
+                if (
+                    Math.abs(player.x - (cake.x + cake.size/2)) < player.size/2 + cake.size/2 &&
+                    Math.abs(player.y - (cake.y + cake.size/2)) < player.size/2 + cake.size/2
+                ) {
+                    ctx.font = "30px Arial";
+                    ctx.fillStyle = "#FF0000";
+                    ctx.fillText("Ты победила! 🎂", canvas.width/2 - 150, canvas.height/2);
+                    return; // Остановка игры
+                }
+            }
+
+            // Счётчик
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "#000000";
+            ctx.fillText(`Сердечек: ${heartsCollected}/${heartsNeeded}`, 20, 30);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Рисует сердечко
+        function drawHeart(x, y, size) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.bezierCurveTo(x, y - size/2, x - size, y - size/2, x - size, y);
+            ctx.bezierCurveTo(x - size, y + size/3, x, y + size, x, y + size);
+            ctx.bezierCurveTo(x, y + size, x + size, y + size/3, x + size, y);
+            ctx.bezierCurveTo(x + size, y - size/2, x, y - size/2, x, y);
+            ctx.fill();
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
